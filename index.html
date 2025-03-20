@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo Booth</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color:#900C3F;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      margin-bottom: 40px;
+      font-size: 2.5rem;
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
+      min-height: 50vh;
+      padding: 40px 20px;
+    }
+
+    .logo {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    h1 {
+      font-size: 36px;
+      color: #e7ad56;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 16px;
+      color: #f0f05e;
+      margin-bottom: 30px;
+    }
+    .btn-primary {
+      background-color: #ff0000;
+      color: white;
+      padding: 12px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 80%;
+      max-width: 300px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: background-color 0.3s;
+    }
+    .btn-primary:hover {
+      background-color: #cc0000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="photo booth logo.png" alt="Photo Booth" class="logo" />
+    <h1>PHOTO BOOTH</h1>
+    <p>We're not taking pictures, we're making memories...</p>
+    <button class="btn-primary" onclick="localStorage.setItem('isLoggedIn', 'true'); window.location.href='main.html'">
+      Let's Get Started
+    </button>
+  </div>
+</body>
+</html>

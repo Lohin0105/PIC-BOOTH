@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Edit Pictures - PHOTO BOOTH</title>
+  <style>
+    /* ===== Base Styles ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color:#900C3F;
+      color: #333;
+      padding: 20px;
+      overflow-y: auto;
+      min-height: 100vh;
+    }
+    .edit-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      margin-top: 20px;
+    }
+    /* ===== Image Container ===== */
+    .images-container {
+      flex: 2;
+      text-align: center;
+      position: relative;
+    }
+    .images-container h2 {
+      margin-bottom: 20px;
+      color:  #e7ad56;
+    }
+    .images-box {
+      background-color: #ffffff;
+      border: 2px solid #000;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px; /* spacing between images */
+      max-width: 324px;
+      margin: 0 auto;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .images-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .editable-image {
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      transition: all 0.3s ease;
+      margin-bottom: 10px;
+    }
+    /* Container for draggable stickers */
+    #stickerContainer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* stickers will be draggable via child elements */
+    }
+    .sticker {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      cursor: move;
+      pointer-events: all;
+    }
+    /* Frame Styles */
+    .frame-simple {
+      border: 10px solid #fff !important;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    .frame-rounded {
+      border-radius: 20px !important;
+      overflow: hidden;
+    }
+    .frame-shadow {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
+      pointer-events: none;
+    }
+    /* ===== Controls Container ===== */
+    .controls-container {
+      flex: 1;
+      background-color: #fff;
+      border: 2px solid #ff4d4d;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 350px;
+    }
+    .controls-container h2 {
+      margin-bottom: 20px;
+      color: #ff4d4d;
+      text-align: center;
+    }
+    .control-group {
+      margin-bottom: 15px;
+    }
+    .control-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .control-group input[type="color"],
+    .control-group input[type="range"],
+    .control-group input[type="text"],
+    .control-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #fff;
+      margin-bottom: 5px;
+    }
+    /* ===== Icon Grid Buttons ===== */
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .icon-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+    .icon-button img {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 5px;
+    }
+    .icon-button:hover {
+      background: #cc0000;
+      transform: scale(1.05);
+    }
+    /* Rotation Controls */
+    .rotation-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .rotation-controls button {
+      padding: 6px 12px;
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    /* ===== Responsive Design ===== */
+    @media (max-width: 768px) {
+      .edit-wrapper {
+        flex-direction: column;
+        gap: 20px;
+      }
+      .images-box {
+        max-width: 100%;
+        width: 100%;
+      }
+      .controls-container {
+        max-width: 100%;
+      }
+      .icon-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .control-group input[type="range"] {
+        height: 8px;
+      }
+      .icon-button {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+      .icon-button img {
+        width: 28px;
+        height: 28px;
+      }
+      /* On mobile, images become vertical rectangular */
+      .editable-image {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="edit-wrapper">
+  <!-- Left Side - Image Preview -->
+  <div class="images-container">
+    <h2>Your Photo Booth Collage</h2>
+    <div class="images-box" id="imagesBox">
+      <div class="images-inner" id="imagesInner">
+        <!-- Placeholder; removed when stored images load -->
+        <img id="previewImg" src="https://via.placeholder.com/300" alt="Sample Image" class="editable-image">
+        <div class="vignette" id="vignette"></div>
+        <!-- Container for stickers -->
+        <div id="stickerContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - Controls -->
+  <div class="controls-container">
+    <h2>Editing Options</h2>
+    
+    <!-- Output Quality -->
+    <div class="control-group">
+      <label>Output Quality</label>
+      <select id="resolution">
+        <option value="144">144p (Mobile)</option>
+        <option value="480">480p (SD)</option>
+        <option value="720" selected>720p (HD)</option>
+        <option value="1080">1080p (Full HD)</option>
+        <option value="2160">2160p (4K)</option>
+      </select>
+    </div>
+
+    <!-- Padding Controls -->
+    <div class="control-group">
+      <label>Padding Size</label>
+      <input type="range" id="padding" min="0" max="50" value="10">
+    </div>
+    <div class="control-group">
+      <label>Padding Color</label>
+      <input type="color" id="paddingColor" value="#ffffff">
+    </div>
+
+    <!-- Image Adjustments -->
+    <div class="control-group">
+      <label>Brightness</label>
+      <input type="range" id="brightness" min="50" max="200" value="100">
+    </div>
+    <div class="control-group">
+      <label>Contrast</label>
+      <input type="range" id="contrast" min="50" max="200" value="100">
+    </div>
+    <div class="control-group">
+      <label>Saturation</label>
+      <input type="range" id="saturation" min="0" max="200" value="100">
+    </div>
+    <div class="control-group">
+      <label>Hue Rotate</label>
+      <input type="range" id="hue" min="0" max="360" value="0">
+    </div>
+    <!-- Additional Filter: Blur -->
+    <div class="control-group">
+      <label>Blur (px)</label>
+      <input type="range" id="blur" min="0" max="10" value="0">
+    </div>
+
+    <!-- Rotation Controls -->
+    <div class="control-group">
+      <label>Rotation</label>
+      <div class="rotation-controls">
+        <input type="range" id="rotation" min="0" max="360" value="0">
+        <button onclick="resetRotation()">↺</button>
+      </div>
+    </div>
+
+    <!-- Effects -->
+    <div class="control-group">
+      <label>Color Filter</label>
+      <select id="colorFilter">
+        <option value="none">None</option>
+        <option value="grayscale(100%)">Grayscale</option>
+        <option value="sepia(100%)">Sepia</option>
+        <option value="invert(100%)">Invert</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label>Vignette</label>
+      <input type="range" id="vignetteStrength" min="0" max="100" value="0">
+    </div>
+
+    <!-- Frame Selection -->
+    <div class="control-group">
+      <label>Select Frame</label>
+      <select id="selectFrame">
+        <option value="none">None</option>
+        <option value="frame-simple">Simple Frame</option>
+        <option value="frame-rounded">Rounded Frame</option>
+        <option value="frame-shadow">Shadow Frame</option>
+      </select>
+    </div>
+    
+    <!-- Text Overlay Controls -->
+    <div class="control-group">
+      <label>Overlay Text</label>
+      <input type="text" id="overlayText" placeholder="Enter overlay text">
+      <label>Text Color</label>
+      <input type="color" id="overlayColor" value="#ff0000">
+      <label>Font Size (px)</label>
+      <input type="range" id="overlayFontSize" min="10" max="72" value="24">
+    </div>
+    
+
+
+    <!-- Action Buttons -->
+    <div class="icon-grid">
+      <button class="icon-button" id="downloadBtn">
+        <img src="https://cdn-icons-png.flaticon.com/512/724/724933.png" alt="Download Icon">
+        <p>Download</p>
+      </button>
+      <button class="icon-button" id="resetBtn">
+        <img src="https://cdn-icons-png.flaticon.com/512/66/66847.png" alt="Reset Icon">
+        <p>Reset</p>
+      </button>
+      <button class="icon-button" id="homeBtn">
+        <img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" alt="Home Icon">
+        <p>Home</p>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Current filter values including blur (in px)
+  let currentFilters = {
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    hue: 0,
+    blur: 0,
+    colorFilter: 'none',
+    rotation: 0
+  };
+
+  // Text overlay settings
+  let overlaySettings = {
+    text: '',
+    color: '#ff0000',
+    fontSize: 24
+  };
+
+  const imgContainer = document.getElementById('imagesInner');
+  const imagesBox = document.getElementById('imagesBox');
+  const vignette = document.getElementById('vignette');
+  const stickerContainer = document.getElementById('stickerContainer');
+
+  // Load images from localStorage ("editedImages")
+  const uploadedImages = JSON.parse(localStorage.getItem('editedImages')) || [];
+  function loadImages() {
+    imgContainer.innerHTML = '';
+    // Append images
+    if (uploadedImages.length > 0) {
+      uploadedImages.forEach(imageSrc => {
+        const img = new Image();
+        img.src = imageSrc;
+        img.className = 'editable-image';
+        imgContainer.appendChild(img);
+      });
+    } else {
+      const placeholder = document.createElement('img');
+      placeholder.src = "https://via.placeholder.com/300";
+      placeholder.alt = "Sample Image";
+      placeholder.className = 'editable-image';
+      imgContainer.appendChild(placeholder);
+    }
+    // Append vignette and sticker container
+    imgContainer.appendChild(vignette);
+    imgContainer.appendChild(stickerContainer);
+    updateFilters();
+  }
+  window.addEventListener('load', loadImages);
+
+  // Update filters on every image (including blur)
+  function updateFilters() {
+    let filterString = `brightness(${currentFilters.brightness}%) contrast(${currentFilters.contrast}%) saturate(${currentFilters.saturation}%) hue-rotate(${currentFilters.hue}deg) blur(${currentFilters.blur}px)`;
+    if (currentFilters.colorFilter !== 'none') {
+      filterString = currentFilters.colorFilter + ' ' + filterString;
+    }
+    document.querySelectorAll('.editable-image').forEach(img => {
+      img.style.filter = filterString;
+      img.style.transform = `rotate(${currentFilters.rotation}deg)`;
+    });
+  }
+
+  // Event listeners for filter adjustments
+  document.getElementById('brightness').addEventListener('input', (e) => {
+    currentFilters.brightness = e.target.value;
+    updateFilters();
+  });
+  document.getElementById('contrast').addEventListener('input', (e) => {
+    currentFilters.contrast = e.target.value;
+    updateFilters();
+  });
+  document.getElementById('saturation').addEventListener('input', (e) => {
+    currentFilters.saturation = e.target.value;
+    updateFilters();
+  });
+  document.getElementById('hue').addEventListener('input', (e) => {
+    currentFilters.hue = e.target.value;
+    updateFilters();
+  });
+  document.getElementById('blur').addEventListener('input', (e) => {
+    currentFilters.blur = e.target.value;
+    updateFilters();
+  });
+  document.getElementById('rotation').addEventListener('input', (e) => {
+    currentFilters.rotation = e.target.value;
+    updateFilters();
+  });
+  function resetRotation() {
+    document.getElementById('rotation').value = 0;
+    currentFilters.rotation = 0;
+    updateFilters();
+  }
+  document.getElementById('colorFilter').addEventListener('change', (e) => {
+    currentFilters.colorFilter = e.target.value;
+    updateFilters();
+  });
+  document.getElementById('vignetteStrength').addEventListener('input', (e) => {
+    vignette.style.boxShadow = `inset 0 0 ${e.target.value}px rgba(0,0,0,0.3)`;
+  });
+  // Padding controls
+  document.getElementById('padding').addEventListener('input', (e) => {
+    imagesBox.style.padding = `${e.target.value}px`;
+  });
+  document.getElementById('paddingColor').addEventListener('input', (e) => {
+    imagesBox.style.backgroundColor = e.target.value;
+  });
+  // Frame Selection
+  document.getElementById('selectFrame').addEventListener('change', (e) => {
+    const frameClass = e.target.value;
+    document.querySelectorAll('.editable-image').forEach(img => {
+      img.classList.remove('frame-simple', 'frame-rounded', 'frame-shadow');
+      if(frameClass !== 'none') {
+        img.classList.add(frameClass);
+      }
+    });
+  });
+  // Text Overlay controls
+  document.getElementById('overlayText').addEventListener('input', (e) => {
+    overlaySettings.text = e.target.value;
+  });
+  document.getElementById('overlayColor').addEventListener('input', (e) => {
+    overlaySettings.color = e.target.value;
+  });
+  document.getElementById('overlayFontSize').addEventListener('input', (e) => {
+    overlaySettings.fontSize = e.target.value;
+  });
+  // Reset All: reset sliders, overlay text, stickers, and currentFilters
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    document.querySelectorAll('input[type="range"]').forEach(input => {
+      if(input.id === 'vignetteStrength') {
+        input.value = 0;
+      } else if(input.id === 'saturation' || input.id === 'brightness' || input.id === 'contrast' || input.id === 'blur') {
+        input.value = 100;
+      } else if(input.id === 'hue' || input.id === 'rotation') {
+        input.value = 0;
+      }
+    });
+    imagesBox.className = 'images-box';
+    vignette.style.boxShadow = 'none';
+    imagesBox.style.padding = '10px';
+    imagesBox.style.backgroundColor = '#ffffff';
+    overlaySettings = { text: '', color: '#ff0000', fontSize: 24 };
+    document.getElementById('overlayText').value = '';
+    document.getElementById('overlayColor').value = '#ff0000';
+    document.getElementById('overlayFontSize').value = 24;
+    // Clear stickers
+    stickerContainer.innerHTML = '';
+    currentFilters = {
+      brightness: 100,
+      contrast: 100,
+      saturation: 100,
+      hue: 0,
+      blur: 0,
+      colorFilter: 'none',
+      rotation: 0
+    };
+    updateFilters();
+  });
+
+  // Helper: draw rounded rectangle on canvas
+  function drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+
+  // Download Composite: combine images, stickers, and overlay text onto one canvas
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const style = getComputedStyle(imagesBox);
+    const padding = parseInt(style.padding) || 10;
+    const gap = 10; // same as CSS gap
+    const angleRad = currentFilters.rotation * Math.PI / 180;
+    // Assume each image is drawn at 300x300
+    const drawWidth = 300;
+    const drawHeight = 300;
+    const rotatedWidth = Math.abs(drawWidth * Math.cos(angleRad)) + Math.abs(drawHeight * Math.sin(angleRad));
+    const rotatedHeight = Math.abs(drawWidth * Math.sin(angleRad)) + Math.abs(drawHeight * Math.cos(angleRad));
+    const images = document.querySelectorAll('.editable-image');
+    const n = images.length;
+    const canvasWidth = imagesBox.offsetWidth;
+    const canvasHeight = padding * 2 + n * rotatedHeight + (n - 1) * gap;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    const ctx = canvas.getContext('2d');
+    // Fill background
+    ctx.fillStyle = style.backgroundColor;
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    // Build filter string (without rotation)
+    let filterString = `brightness(${currentFilters.brightness}%) contrast(${currentFilters.contrast}%) saturate(${currentFilters.saturation}%) hue-rotate(${currentFilters.hue}deg) blur(${currentFilters.blur}px)`;
+    if (currentFilters.colorFilter !== 'none') {
+      filterString = currentFilters.colorFilter + ' ' + filterString;
+    }
+    ctx.filter = filterString;
+    // Determine frame selection
+    const frameSelection = document.getElementById('selectFrame').value;
+    let y = padding;
+    images.forEach(img => {
+      const centerX = canvasWidth / 2;
+      const centerY = y + rotatedHeight / 2;
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(angleRad);
+      // If rounded frame, clip with a rounded rectangle
+      if (frameSelection === 'frame-rounded') {
+        const radius = 20;
+        drawRoundedRect(ctx, -drawWidth/2, -drawHeight/2, drawWidth, drawHeight, radius);
+        ctx.clip();
+      }
+      ctx.drawImage(img, -drawWidth/2, -drawHeight/2, drawWidth, drawHeight);
+      ctx.restore();
+      y += rotatedHeight + gap;
+    });
+    // Draw text overlay if any
+    if (overlaySettings.text.trim() !== '') {
+      ctx.filter = 'none';
+      ctx.font = `${overlaySettings.fontSize}px Arial`;
+      ctx.fillStyle = overlaySettings.color;
+      ctx.textAlign = 'center';
+      // Draw text at bottom center of canvas with some margin
+      ctx.fillText(overlaySettings.text, canvasWidth / 2, canvasHeight - 20);
+      ctx.filter = filterString;
+    }
+    // Trigger download
+    const link = document.createElement('a');
+    link.download = 'edited-collage.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+
+  // Home Button
+  document.getElementById('homeBtn').addEventListener('click', () => {
+    window.location.href = 'index.html';
+  });
+</script>
+
+</body>
+</html>
