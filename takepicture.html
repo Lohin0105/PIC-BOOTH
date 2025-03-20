@@ -235,17 +235,22 @@
     }
 
     captureBtn.addEventListener('click', async () => {
-      await runCountdown(3);
-      const imageData = captureFrame();
-      capturedImages.push(imageData);
-      addThumbnail(imageData);
+  await runCountdown(3);
+  const imageData = captureFrame();
+  capturedImages.push(imageData);
+  addThumbnail(imageData);
 
-      if (capturedImages.length === 3) {
-        captureBtn.classList.add('hidden');
-        retakeBtn.classList.remove('hidden');
-        doneBtn.classList.remove('hidden');
-      }
-    });
+  // Show retake and done buttons after the first image itself
+  if (capturedImages.length >= 1) {
+    retakeBtn.classList.remove('hidden');
+    doneBtn.classList.remove('hidden');
+  }
+
+  // If 3 images are captured, hide the capture button
+  if (capturedImages.length === 3) {
+    captureBtn.classList.add('hidden');
+  }
+});
 
     retakeBtn.addEventListener('click', () => {
       capturedImages = [];
